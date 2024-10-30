@@ -84,12 +84,8 @@ const handler = async (req, res) => {
       }
     }
 
-
-    
-//Signup, Signin and User checking
 async function handleSignup(req, res) {
   const { firstname, lastname, address, mobile, email, password } = req.body;
-  console.log('Signup request body:', req.body);
 
   try {
     // Check if email already exists
@@ -272,6 +268,7 @@ async function handleSignin(req, res) {
       res.status(500).json({ success: false, error: 'An error occurred during logout' });
     }
   }
+
 
 
 
@@ -703,12 +700,12 @@ async function handleSubmitRatings(req, res) {
  
   
 
-  export default withIronSession(handler, {
-    password: process.env.SESSION_PASSWORD,
-    cookieName: 'nars_session',
-    cookieOptions: {
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      httpOnly: true,
-    },
-  });
+export default withIronSession(handler, {
+  password: process.env.SESSION_PASSWORD,
+  cookieName: 'nars_session',
+  cookieOptions: {
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    httpOnly: true,
+  },
+});
