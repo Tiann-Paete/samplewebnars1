@@ -91,19 +91,24 @@ async function handleSignup(req, res) {
   const { firstname, lastname, address, mobile, email, password } = req.body;
 
   try {
+    // Check if email already exists
     const existingUser = await query('SELECT * FROM registered_users WHERE email = ?', [email]);
     if (existingUser.length > 0) {
       return res.status(400).json({ error: 'Email is already in use' });
     }
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Insert new user
     const result = await query(
       'INSERT INTO registered_users (firstName, lastName, address, contact, email, password) VALUES (?, ?, ?, ?, ?, ?)',
       [firstname, lastname, address, mobile, email, hashedPassword]
     );
+    // Insert into user_login table
     await query(
       'INSERT INTO user_login (user_firstname, user_lastname, contact, email) VALUES (?, ?, ?, ?)',
       [firstname, lastname, mobile, email]
     );
+    // Generate JWT token
     const token = sign({ userId: result.insertId }, process.env.JWT_SECRET, { expiresIn: '6h' });
     res.status(200).json({ message: 'Signup successful', token });
   } catch (error) {
@@ -117,9 +122,11 @@ async function handleSignin(req, res) {
 
   try {
     const users = await query('SELECT * FROM registered_users WHERE email = ?', [email]);
+
     if (users.length === 0) {
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
+
     const user = users[0];
     const match = await bcrypt.compare(password, user.password);
 
@@ -127,8 +134,10 @@ async function handleSignin(req, res) {
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
 
+    // Generate JWT token
     const token = sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '6h' });
 
+    // Set the user in the session
     req.session.user = {
       id: user.id,
       firstName: user.firstName,
@@ -136,17 +145,20 @@ async function handleSignin(req, res) {
     };
     await req.session.save();
 
+    // Reset logout_time to NULL for the user
     await query('UPDATE user_login SET logout_time = NULL WHERE email = ?', [email]);
 
+    // Update login time
     const loginTime = new Date();
     await query('UPDATE user_login SET login_time = ? WHERE email = ?', [loginTime, email]);
 
+    // Set token in a secure, HTTP-only cookie
     res.setHeader('Set-Cookie', `authToken=${token}; HttpOnly; Path=/; Max-Age=3600; SameSite=Strict${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
 
     res.status(200).json({ 
       success: true, 
       message: 'Signin successful', 
-      token, 
+      token, // Send token to client
       firstName: user.firstName 
     });
   } catch (error) {
@@ -166,6 +178,7 @@ async function handleSignin(req, res) {
       const decoded = verify(token, process.env.JWT_SECRET);
       const userId = decoded.userId;
   
+      // Check if the user exists in the session
       if (req.session.user && req.session.user.id === userId) {
         res.json({ 
           isAuthenticated: true, 
@@ -176,6 +189,8 @@ async function handleSignin(req, res) {
           }
         });
       } else {
+        // If the token is valid but the session doesn't exist, create it
+        // You might want to fetch user data from the database here
         req.session.user = { id: userId };
         res.json({ isAuthenticated: true, user: { id: userId } });
       }
@@ -256,6 +271,7 @@ async function handleSignin(req, res) {
       res.status(500).json({ success: false, error: 'An error occurred during logout' });
     }
   }
+
 
 
 
