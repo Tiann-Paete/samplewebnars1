@@ -1,0 +1,11 @@
+{
+  "/_app": "pages/_app.js",
+  "/_error": "pages/_error.js",
+  "/_document": "pages/_document.js",
+  "/order-tracking/[orderId]": "pages/order-tracking/[orderId].js",
+  "/home": "pages/home.js",
+  "/order-history": "pages/order-history.js",
+  "/api/[...narsapi]": "pages/api/[...narsapi].js",
+  "/signin": "pages/signin.js",
+  "/order-tracking": "pages/order-tracking.js"
+}
