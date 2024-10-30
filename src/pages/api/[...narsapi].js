@@ -89,6 +89,7 @@ const handler = async (req, res) => {
 //Signup, Signin and User checking
 async function handleSignup(req, res) {
   const { firstname, lastname, address, mobile, email, password } = req.body;
+  console.log('Signup request body:', req.body);
 
   try {
     // Check if email already exists
